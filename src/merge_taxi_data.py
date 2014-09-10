@@ -1,6 +1,9 @@
+# merge_taxi_data.py
+
 # Merge the two files trip_data_month.csv.gv and fare_data_month.csv.gv into one file
 # taxi_data_month.csv.gv, taking the month number as a parameter. Additionally,
-# converting date/times to pandas datetime format.
+# converting date/times to pandas datetime format. No loss of raw information happens
+# running this script.
 
 import sys # for handling command-line arguments
 import numpy as np
