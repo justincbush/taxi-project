@@ -16,6 +16,8 @@
 # This script assumes it's in a folder Project/code/ and that the data is stored in
 # Project/data/tripdata2013 and Project/data/faredata2013
 
+# To use this remotely with live plotting, use ssh -X
+
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -99,8 +101,35 @@ data.plot(kind='hexbin', x='pickup_longitude', y='pickup_latitude',
             gridsize=200, bins='log', extent=[-74.0,-73.93,40.7,40.8])
 data.plot(kind='hexbin', x='dropoff_longitude', y='dropoff_latitude', 
             gridsize=200, bins='log', extent=[-74.0,-73.93,40.7,40.8])
+            
+# Sort the data by hack_license and then pickup_time, to allow for analysis
+# of dropoff to pickup times (as well as investigate whether any license_numbers
+# are dubious because of impossible overlaps
+
+data['same_driver_as_next'] = np.equal(data['hack_license'],
+                                            data['hack_license'].shift(-1))
+
+data['time_difference_to_next'] = data['pickup_datetime'].shift(-1) 
+                                            - data['dropoff_datetime']
+                                
+# Kind of a hack to get this to represent seconds:
+
+data['time_difference_to_next'] = data['time_difference_to_next']/np.timedelta64(1, 's')
+
+# Might be useful to reindex:
+# data.index = range(len(data)) 
 
 # Close f
 
 f.close()
+
+# Geocoding problem
+
+# Python iterators and generators
+
+# Groupby in SQL (alternatively MapReduce)
+
+# MR Job
+
+
 
