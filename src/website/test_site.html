@@ -4,13 +4,16 @@
 <div class=page>
     <h1>NYC Taxi trip time estimator</h1>
     <div class=user_input>
+    <form name="input" action="demo_form_action.asp" method="get">
         <br>
-        Where do you want to start? <br> % Use google geocoding (with cache?)
+        Where do you want to start? <br> <!-- Use google geocoding (with cache?)-->
         <input type="text" name="start_point" size="50" maxlength="50"> <br>
         Where do you want to go? <br>
         <input type="text" name="end_point" size="50" maxlength="50"> <br>
         Do you know what time you are leaving?<br>
         Do you know what time you want to get there by?<br>
+        <input type="submit" value="Submit">
+    </form>
     </div>
     <br>
     <br>

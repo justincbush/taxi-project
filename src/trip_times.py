@@ -23,9 +23,26 @@ taxi_data = pd.read_csv('../data/taxi_data_1.csv.gz',compression='gzip')
 taxi_data = taxi_data[['trip_time_in_secs', 'pickup_longitude', 'pickup_latitude', 
                         'dropoff_longitude', 'dropoff_latitude']]
                         
+# Remove rows with blatantly wrong coordinates
+
+min_lat = 40.5
+max_lat = 40.9
+min_lon = -74.3
+max_lon = -73.7
+
+good_pickup_lat = (taxi_data['pickup_latitude']>min_lat) \
+                        & (taxi_data['pickup_latitude']<max_lat)
+good_dropoff_lat = (taxi_data['dropoff_latitude']>min_lat) \
+                        & (taxi_data['dropoff_latitude']<max_lat)
+good_pickup_lon = (taxi_data['pickup_longitude']>min_lon) \
+                        & (taxi_data['pickup_longitude']<max_lon)
+good_dropoff_lon = (taxi_data['dropoff_longitude']>min_lon) \
+                        & (taxi_data['dropoff_longitude']<max_lon)                       
+                        
+taxi_data = taxi_data[good_pickup_lat&good_dropoff_lat&good_pickup_lon&good_dropoff_lon]
+                        
 # Choose rounding tolerance for latitude/longitude coordinates. This determines the
-# grid size. Number of decimal places must be at least the number of decimal places
-# of tol
+# grid size.
 
 tol = .01
 
@@ -34,7 +51,7 @@ tol = .01
 # cause rounding weirdness.
 
 def roundCoord(coordinates, tol):
-     return (np.rint(coordinates/tol)*tol).apply(lambda x: str(x)))
+     return (np.rint(coordinates/tol)*tol).apply(lambda x: str(x))
      
 taxi_data['pick_lat_rnd'] = roundCoord(taxi_data['pickup_latitude'], tol)
 taxi_data['pick_lon_rnd'] = roundCoord(taxi_data['pickup_longitude'], tol)
@@ -46,7 +63,17 @@ taxi_data['drop_lon_rnd'] = roundCoord(taxi_data['dropoff_longitude'], tol)
 # trip_groups.get_group(('40.73', '-74.52', '40.71', '-73.99'))
 
 trip_groups = taxi_data.groupby(['pick_lat_rnd','pick_lon_rnd',
-                                    'drop_lat_rnd','drop_lon_rnd'])
+                                    'drop_lat_rnd','drop_lon_rnd'],sort=False)
+                                    
+# Filter by some minimum number of trips for adequate statistics.
+
+min_num_trips = 4000
+
+# Number of journeys meeting that minimimum number
+
+sum(trip_groups['trip_time_in_secs'].count()>min_num_trips)
+
+
 
 # pickle
 
