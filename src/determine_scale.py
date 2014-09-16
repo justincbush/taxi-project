@@ -9,14 +9,14 @@ import pandas as pd
 
 # Read in (nonrandom) sample of raw data
 
-sample_size = 1000000
+sample_size = 10000
 
 taxi_data = pd.read_csv('../data/taxi_data_1.csv.gz',compression='gzip',nrows=sample_size)
 
 # Select relevant columns
 
 taxi_data = taxi_data[['trip_time_in_secs', 'pickup_longitude', 'pickup_latitude', 
-                        'dropoff_longitude', 'dropoff_latitude']]
+                        'dropoff_longitude', 'dropoff_latitude', 'pickup_datetime']]
                         
 # Remove rows with blatantly wrong coordinates
 
@@ -49,6 +49,14 @@ thresholds = [1, 10, 100, 1000]
 def roundCoord(coordinates, tol):
      return (np.rint(coordinates/tol)*tol).apply(lambda x: str(x))
      
+# Convert 'pickup_datetime' to pandas datetime format, then extract
+# 'day_of_week' and 'hour'.
+
+taxi_data['pickup_datetime'] = pd.to_datetime(taxi_data['pickup_datetime'])
+taxi_data['day_of_week'] = taxi_data['pickup_datetime'].apply(lambda x: x.weekday())
+taxi_data['hour'] = taxi_data['pickup_datetime'].apply(lambda x: x.hour)
+
+     
 # Compute values of interest
 
 output = []
@@ -63,8 +71,8 @@ for tol in tolerances:
     taxi_data['drop_lon_rnd'] = \
         (np.rint(taxi_data['dropoff_longitude']/tol)*tol).apply(lambda x: str(x))
 
-    trip_groups = taxi_data.groupby(['pick_lat_rnd','pick_lon_rnd',
-                                    'drop_lat_rnd','drop_lon_rnd'],sort=False)
+    trip_groups = taxi_data.groupby(['pick_lat_rnd','pick_lon_rnd','drop_lat_rnd',
+                                    'drop_lon_rnd','day_of_week','hour'],sort=False)
     
     counts = trip_groups['trip_time_in_secs'].count()
     

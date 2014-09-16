@@ -5,17 +5,19 @@
 
 import numpy as np
 import pandas as pd
+import sqlite3 as db
 
-# Read in raw data
+# Read in raw data, sample_size for testing on subset of data
 
 sample_size = 10000
 
 taxi_data = pd.read_csv('../data/taxi_data_1.csv.gz',compression='gzip',nrows=sample_size)
+# taxi_data = pd.read_csv('../data/taxi_data_1.csv.gz',compression='gzip')
 
 # Select relevant columns
 
 taxi_data = taxi_data[['trip_time_in_secs', 'pickup_longitude', 'pickup_latitude', 
-                        'dropoff_longitude', 'dropoff_latitude']]
+                        'dropoff_longitude', 'dropoff_latitude', 'pickup_datetime']]
                         
 # Remove rows with blatantly wrong coordinates
 
@@ -52,19 +54,28 @@ taxi_data['pick_lon_rnd'] = roundCoord(taxi_data['pickup_longitude'], tol)
 taxi_data['drop_lat_rnd'] = roundCoord(taxi_data['dropoff_latitude'], tol)
 taxi_data['drop_lon_rnd'] = roundCoord(taxi_data['dropoff_longitude'], tol)
 
+                                    
+# Convert 'pickup_datetime' to pandas datetime format, then extract
+# 'day_of_week' and 'hour'.
+
+taxi_data['pickup_datetime'] = pd.to_datetime(taxi_data['pickup_datetime'])
+taxi_data['day_of_week'] = taxi_data['pickup_datetime'].apply(lambda x: x.weekday())
+taxi_data['hour'] = taxi_data['pickup_datetime'].apply(lambda x: x.hour)
+
 # Group trips by origin and destination. To access a particular group with rounded 
 # coordinates, use the notation:
 # trip_groups.get_group(('40.73', '-74.52', '40.71', '-73.99'))
 
-trip_groups = taxi_data.groupby(['pick_lat_rnd','pick_lon_rnd',
-                                    'drop_lat_rnd','drop_lon_rnd'],sort=False)
-                                    
+trip_groups = taxi_data.groupby(['pick_lat_rnd','pick_lon_rnd','drop_lat_rnd',
+                                    'drop_lon_rnd','day_of_week','hour'],sort=False)
+ 
 # Filter by some minimum number of trips for adequate statistics.
 
 min_num_trips = 2
 
 trip_groups_thresh = trip_groups.filter(lambda x: len(x) >= min_num_trips).groupby(
-            ['pick_lat_rnd','pick_lon_rnd','drop_lat_rnd','drop_lon_rnd'],sort=False)
+            ['pick_lat_rnd','pick_lon_rnd','drop_lat_rnd','drop_lon_rnd',
+             'day_of_week','hour'],sort=False)
 
 # list of desired percentiles
 
@@ -73,13 +84,20 @@ percentiles = [10, 25, 50, 75, 90]
 # dictionary to be supplied to agg method. Thanks to Isaac for the double lambdas
 
 dict_of_funcs = {'count': lambda x: len(x)}
-for pct in [10,50,90]:
+for pct in percentiles:
     dict_of_funcs['percentile' + str(pct)] = \
         (lambda p: (lambda x: np.percentile(x,p)))(pct)
     
-
-    
 sql_data = trip_groups_thresh['trip_time_in_secs'].agg(dict_of_funcs)
+
+# Write to sql database
+
+con = db.connect('taxi_trip_data.sql' )
+
+sql_data.to_sql('test_table',con, if_exists='replace')
+
+con.commit()
+con.close()
 
 
 
