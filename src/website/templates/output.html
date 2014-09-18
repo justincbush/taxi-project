@@ -1,0 +1,14 @@
+{% extends "test_site.html" %}
+{% block output %}
+Trip from {{ start_address }} to {{ end_address }} <br><br>
+
+Trip times: <br>
+10th percentile: {{ pct10 }}<br>
+25th percentile: {{ pct25 }}<br>
+50th percentile: {{ pct50 }}<br>
+75th percentile: {{ pct75 }}<br>
+90th percentile: {{ pct90 }}<br>
+<img src={{ url_for('make_boxplot', data=concat) }} alt="Image Placeholder"><br>
+<img src="{{ img_prefix }}&{{ window }}&{{ marker_start }}&{{ marker_end }}&{{ style }}">
+
+{% endblock %}

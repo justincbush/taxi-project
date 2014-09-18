@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, redirect
-import numpy as np
+from flask import Flask, render_template, request, redirect, json, g, send_file  
 import urllib
-import json
 import sqlite3 as sql
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import StringIO
 
 # Tolerance and rounding function to translate raw lat/lon data into our grids
 
@@ -15,7 +18,7 @@ def roundCoord(coordinates, tol):
 app = Flask(__name__)
 
 @app.route('/')
-def hello_world():
+def test_site():
     return render_template('test_site.html')
     
 @app.route('/output', methods = ['POST'])
@@ -26,38 +29,164 @@ def record_data():
     hour = int(request.form.get('hour'))
     ampm = request.form.get('ampm')
     
+    print 'Accepted input'
+    
     if ampm == 'pm':
         hour += 12
         
+    
     start_format = start_point.replace(' ','+')
     end_format = end_point.replace(' ','+')
     
     url_prefix = 'https://maps.googleapis.com/maps/api/geocode/json?address='
-    start_link = url_prefix + start_format
-    end_link = url_prefix + end_format
+    api_key = 'key=AIzaSyDg3Rx-2nU5CtR3DnhUUwAcmgrN6ITUopg'
+    start_link = url_prefix + start_format + '&' + api_key
+    end_link = url_prefix + end_format + '&' + api_key
     
     start_query = urllib.urlopen(start_link)
     end_query = urllib.urlopen(end_link)
     
+    print 'submitted google geocoding query'
+    
     start_data = json.loads(start_query.read())
     end_data = json.loads(end_query.read())
     
-    start_lat = start_data['results'][0]['geometry']['location']['lat']
-    start_lon = start_data['results'][0]['geometry']['location']['lng']
-    end_lat = end_data['results'][0]['geometry']['location']['lat']
-    end_lon = end_data['results'][0]['geometry']['location']['lng']
+    if start_data['status'] == 'OK' and end_data['status'] == 'OK':
+        start_lat = start_data['results'][0]['geometry']['location']['lat']
+        start_lon = start_data['results'][0]['geometry']['location']['lng']
+        end_lat = end_data['results'][0]['geometry']['location']['lat']
+        end_lon = end_data['results'][0]['geometry']['location']['lng']
+    elif start_data['status'] != 'OK' and end_data['status'] != 'OK':
+        print 'Do not recognize starting address or destination'
+        return redirect('/') # Should point to error of some sort
+    elif start_data['status'] != 'OK' and end_data['status'] == 'OK':
+        print 'Do not recognize starting address'
+        return redirect('/') # Should point to error of some sort
+    else:
+        print 'Do not recognize destination'
+        return redirect('/') # Should point to error of some sort
+   
+    print 'extracted data'
     
     # Round coordinates and convert to strings
         
-    start_lat = roundCoord(start_lat, tol)
-    start_lon = roundCoord(start_lon, tol)
-    end_lat = roundCoord(end_lat, tol)
-    end_lon = roundCoord(end_lon, tol)
+    start_lat_rnd = roundCoord(start_lat, tol)
+    start_lon_rnd = roundCoord(start_lon, tol)
+    end_lat_rnd = roundCoord(end_lat, tol)
+    end_lon_rnd = roundCoord(end_lon, tol)
     
-    conn = sql.connect('taxi_data.db')
+    print 'rounded coordinates'
+    print start_lat_rnd, start_lon_rnd, end_lat_rnd, end_lon_rnd
+        
+    conn = sql.connect('taxi_trip_data.db')
     
+    print 'connected to database'
     
-    return redirect('/')
+    cur = conn.cursor()
+    
+    print 'established cursor'
+       
+    cur.execute('SELECT * from test_table WHERE pick_lat_rnd=:start_lat_rnd \
+                                          AND pick_lon_rnd=:start_lon_rnd \
+                                          AND drop_lat_rnd=:end_lat_rnd \
+                                          AND drop_lon_rnd=:end_lon_rnd',
+                {'start_lat_rnd': start_lat_rnd, 'start_lon_rnd': start_lon_rnd,
+                 'end_lat_rnd': end_lat_rnd, 'end_lon_rnd': end_lon_rnd})
+                 
+    print 'submitted query'
+                 
+    data = cur.fetchone()
+                 
+    print 'fetched data'
+
+    if data is not None:
+        pct10 = str(int(data[9])/60)
+        pct25 = str(int(data[7])/60)
+        pct50 = str(int(data[5])/60)
+        pct75 = str(int(data[8])/60)
+        pct90 = str(int(data[6])/60)
+        
+        concat = pct10+','+pct25+','+pct50+','+pct75+','+pct90
+        
+        for elt in [pct10,pct25,pct50,pct75,pct90]:
+            elt = elt + 'minutes'
+    else:
+        print 'No data for such a trip'
+        
+    conn.close()
+
+    print 'closed connection'
+    
+    print 'all done!'
+    
+    pipe = '%7C'
+    marker_style_start = 'label:A'+pipe+'color:blue'
+    marker_style_end = 'label:B'+pipe+'color:green'
+    
+    img_prefix = 'http://maps.googleapis.com/maps/api/staticmap?size=500x400'
+    window = 'visible='+start_format+pipe+end_format
+    marker_start = 'markers='+marker_style_start+pipe+start_format 
+    marker_end = 'markers='+marker_style_end+pipe+end_format
+    style = 'maptype=terrain'
+
+    
+    return render_template('output.html', img_prefix=img_prefix, window=window,
+                                marker_start=marker_start, marker_end=marker_end,
+                                start_address=start_point, end_address=end_point,
+                                style=style, pct10=pct10, pct25=pct25, pct50=pct50,
+                                pct75=pct75, pct90=pct90, concat=concat )
+                                
+
+@app.route('/fig-<data>')
+def make_boxplot(data):
+
+    # define "figure" and "axes" objects, where the "axes" is really my figure and
+    # "figure" is the thing containing my figure. Annoying.
+    
+    split_data = data.split(',')
+    num_data = [int(num) for num in split_data]
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(5,1)
+
+    # Make the boxplot and get rid of borders I don't want.
+    
+    ax.boxplot(num_data,vert=False,widths=0.6)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    # Get rid of ticks.
+
+    ax.xaxis.set_ticks_position('none')
+    ax.yaxis.set_ticks_position('none')
+    
+    ax.xaxis.set_label_text('Trip time in minutes', size=8)
+    ax.xaxis.set_tick_params(labelsize=8)
+
+    # Set scale of plot as roughly [0,(4/3)*max]
+
+    upper_bound = max(max(num_data)*4/3,max(num_data)+2)
+
+    # Scale the plot
+
+    plt.xticks(range(0,upper_bound,max(upper_bound/7,1)))
+
+    # Maybe not necessary, but seems to make things look better for now
+
+    plt.tight_layout()
+
+    # Remove pointless y-axis labels in a hacky way
+
+    ax.yaxis.set_ticklabels(' ')
+
+    # Save the figure (untested)
+    # Relevant: http://stackoverflow.com/questions/20107414/passing-a-matplotlib-figure-to-html-flask
+
+    img = StringIO.StringIO()
+    fig.savefig(img)        #  bbox_inches='tight' ?
+    img.seek(0)
+    return send_file(img, mimetype='image/png')
     
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
