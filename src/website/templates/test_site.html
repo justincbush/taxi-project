@@ -22,6 +22,7 @@
         </select><br>
         What time are you leaving?<br>
        <select name="hour"> <br>
+            <option value=0>12:00</option>
             <option value=1>1:00</option>
             <option value=2>2:00</option>
             <option value=3>3:00</option>
@@ -33,16 +34,13 @@
             <option value=9>9:00</option>
             <option value=10>10:00</option>
             <option value=11>11:00</option>
-            <option value=0>12:00</option>
         </select>
-        <input type="radio" name="ampm" value="am">AM</input>
+        <input type="radio" name="ampm" value="am" checked="checked">AM</input>
         <input type="radio" name="ampm" value="pm">PM</input>
         <br><br>
         <input type="submit" value="Submit">
     </form>
     </div>
-    <br>
-    <br>
     <br>
     <div class=site_output>
        {% block output %}{% endblock %} 

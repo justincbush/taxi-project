@@ -29,6 +29,26 @@ def record_data():
     hour = int(request.form.get('hour'))
     ampm = request.form.get('ampm')
     
+    if ampm == None:
+        ampm = 'am'
+    
+    text_time = str(hour)+ ' ' + ampm.upper()
+    
+    if day == 0:
+        day_name = 'Monday'
+    elif day == 1:
+        day_name = 'Tuesday'
+    elif day == 2:
+        day_name = 'Wednesday'
+    elif day == 3:
+        day_name = 'Thursday'
+    elif day == 4:
+        day_name = 'Friday'
+    elif day == 5:
+        day_name = 'Saturday'
+    else:
+        day_name = 'Sunday'
+    
     print 'Accepted input'
     
     if ampm == 'pm':
@@ -47,6 +67,7 @@ def record_data():
     end_query = urllib.urlopen(end_link)
     
     print 'submitted google geocoding query'
+    print start_link
     
     start_data = json.loads(start_query.read())
     end_data = json.loads(end_query.read())
@@ -57,14 +78,17 @@ def record_data():
         end_lat = end_data['results'][0]['geometry']['location']['lat']
         end_lon = end_data['results'][0]['geometry']['location']['lng']
     elif start_data['status'] != 'OK' and end_data['status'] != 'OK':
-        print 'Do not recognize starting address or destination'
-        return redirect('/') # Should point to error of some sort
+        message = 'cannot recognize starting address and destination'
+        return render_template('error.html', message=message, start_address=start_point,
+                    end_address=end_point, text_time=text_time, day_name=day_name) 
     elif start_data['status'] != 'OK' and end_data['status'] == 'OK':
-        print 'Do not recognize starting address'
-        return redirect('/') # Should point to error of some sort
+        message = 'cannot recognize starting address'
+        return render_template('error.html', message=message, start_address=start_point,
+                    end_address=end_point, text_time=text_time, day_name=day_name) 
     else:
-        print 'Do not recognize destination'
-        return redirect('/') # Should point to error of some sort
+        message = 'cannot recognize destination'
+        return render_template('error.html', message=message, start_address=start_point,
+                    end_address=end_point, text_time=text_time, day_name=day_name) 
    
     print 'extracted data'
     
@@ -86,32 +110,42 @@ def record_data():
     
     print 'established cursor'
        
-    cur.execute('SELECT * from test_table WHERE pick_lat_rnd=:start_lat_rnd \
-                                          AND pick_lon_rnd=:start_lon_rnd \
-                                          AND drop_lat_rnd=:end_lat_rnd \
-                                          AND drop_lon_rnd=:end_lon_rnd',
-                {'start_lat_rnd': start_lat_rnd, 'start_lon_rnd': start_lon_rnd,
-                 'end_lat_rnd': end_lat_rnd, 'end_lon_rnd': end_lon_rnd})
+    cur.execute('SELECT * from test_table WHERE pickup_latitude=:start_lat_rnd \
+                                          AND pickup_longitude=:start_lon_rnd \
+                                          AND dropoff_latitude=:end_lat_rnd \
+                                          AND dropoff_longitude=:end_lon_rnd \
+                                          AND day_of_week=:day AND hour=:hour',
+                        {'start_lat_rnd': start_lat_rnd, 'start_lon_rnd': start_lon_rnd,
+                        'end_lat_rnd': end_lat_rnd, 'end_lon_rnd': end_lon_rnd,
+                        'day': day, 'hour': hour})
                  
     print 'submitted query'
                  
     data = cur.fetchone()
+    print data
                  
     print 'fetched data'
 
     if data is not None:
-        pct10 = str(int(data[9])/60)
-        pct25 = str(int(data[7])/60)
-        pct50 = str(int(data[5])/60)
-        pct75 = str(int(data[8])/60)
-        pct90 = str(int(data[6])/60)
+        pct10 = str(int(np.rint(data[11]/60)))
+        pct25 = str(int(np.rint(data[9]/60)))
+        pct50 = str(int(np.rint(data[7]/60)))
+        pct75 = str(int(np.rint(data[10]/60)))
+        pct90 = str(int(np.rint(data[8]/60)))
+        samples = str(data[6])
+        pct10dec = str(data[11]/60)
+        pct25dec = str(data[9]/60)
+        pct50dec = str(data[7]/60)
+        pct75dec = str(data[10]/60)
+        pct90dec = str(data[8]/60)
         
-        concat = pct10+','+pct25+','+pct50+','+pct75+','+pct90
-        
-        for elt in [pct10,pct25,pct50,pct75,pct90]:
-            elt = elt + 'minutes'
+        concat = pct10dec+','+pct25dec+','+pct50dec+','+pct75dec+','+pct90dec    
     else:
-        print 'No data for such a trip'
+        message = 'insufficent data to compute travel times'
+        return render_template('error.html', message=message, start_address=start_point,
+                    end_address=end_point, text_time=text_time, day_name=day_name) 
+   
+    print pct10
         
     conn.close()
 
@@ -134,7 +168,8 @@ def record_data():
                                 marker_start=marker_start, marker_end=marker_end,
                                 start_address=start_point, end_address=end_point,
                                 style=style, pct10=pct10, pct25=pct25, pct50=pct50,
-                                pct75=pct75, pct90=pct90, concat=concat )
+                                pct75=pct75, pct90=pct90, concat=concat,
+                                text_time=text_time, samples=samples, day_name=day_name)
                                 
 
 @app.route('/fig-<data>')
@@ -144,7 +179,7 @@ def make_boxplot(data):
     # "figure" is the thing containing my figure. Annoying.
     
     split_data = data.split(',')
-    num_data = [int(num) for num in split_data]
+    num_data = [float(num) for num in split_data]
 
     fig, ax = plt.subplots()
     fig.set_size_inches(5,1)
@@ -166,7 +201,7 @@ def make_boxplot(data):
 
     # Set scale of plot as roughly [0,(4/3)*max]
 
-    upper_bound = max(max(num_data)*4/3,max(num_data)+2)
+    upper_bound = int(max(max(num_data)*4/3,max(num_data)+2))
 
     # Scale the plot
 
