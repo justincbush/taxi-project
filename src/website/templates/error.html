@@ -1,0 +1,8 @@
+{% extends "test_site.html" %}
+{% block output %}
+Trip from {{ start_address }} to {{ end_address }} at {{ text_time }} on {{ day_name }}
+<br>
+<br>
+Sorry: {{ message }}
+
+{% endblock %}
