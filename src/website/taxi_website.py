@@ -64,41 +64,46 @@ def record_data():
         return str((np.rint(coordinates/tol)*tol))
     
     output = {}
-    for database in databases:
-        output[database] = \
-            dbase.query_database_row(databases[database],
+    for time_diff in range(-6,7):
+        output[time_diff] = \
+            dbase.query_database_row(trip_speeds_database,
                                      start_lat_rnd=roundCoord(start_coords[0]),
                                      start_lon_rnd=roundCoord(start_coords[1]),
                                      end_lat_rnd=roundCoord(end_coords[0]),
                                      end_lon_rnd=roundCoord(end_coords[1]),
-                                     day=day, hour=hour)        
+                                     day=day, hour=hour+time_diff)        
 
     
-    samples = output['times'][6]
-    quantiles = [[num/60.0 for num in sorted(output['times'][7:12])],
-                 sorted([distance/spd for spd in output['speeds'][7:12]])]
+    samples = int(output[0][6])
+    quantiles = {}
+    labels = {}
+    for key in output:
+        quantiles[key] = sorted([distance/spd for spd in output[key][7:12]])
+        labels[key] = str(hour+key)+':00'
+    
     print 'Quantiles:',quantiles
     quantiles_to_url = \
-        'z'.join(str(num) for list in quantiles for num in list)
+        'z'.join(str(num) for key in sorted(quantiles) for num in quantiles[key])
     
-    labels = ['old method','new method']
     labels_to_url = \
-        ','.join(label.replace(' ','+') for label in labels)
-        
+        ','.join(labels[key].replace(' ','+') for key in sorted(labels))
+    
+    heatmap = 'static/hail_difficulty-'+days_of_week[day]+'.png'    
     map_url = api.make_static_map_url(start_point,end_point,size='500x400',
                         maptype='terrain', markers=start_point+'|'+end_point)
     
     return render_template('output.html', map_url=map_url, quantiles=quantiles_to_url,
-                                labels = labels_to_url,
+                                labels = labels_to_url, start_address=start_point,
                                 text_time=str(hour)+':00', samples=str(samples), 
-                                day_name=days_of_week[day])
+                                day_name=days_of_week[day], end_address=end_point,
+                                heatmap=heatmap)
 
-@app.route('/fig-<quantiles>-<labels>')
+@app.route('/fig/<quantiles>/<labels>')
 def make_figure(quantiles,labels):
 
     split_data = np.array([float(num) for num in quantiles.split('z')])
 
-    quantiles_list = [split_data[:5],split_data[5:]]
+    quantiles_list = [split_data[i:i+5] for i in range(0,len(split_data),5)]
     
     quantile_labels = [label.replace('+',' ') for label in labels.split(',')]
     

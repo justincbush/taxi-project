@@ -3,8 +3,10 @@
 Trip from {{ start_address }} to {{ end_address }} at {{ text_time }} on {{ day_name }}
 <br><br>
 
-Based on {{ samples }} trips.
-<img src={{ url_for('make_figure', quantiles=quantiles, labels=labels) }} alt="Image Placeholder"><br>
-<img src="{{ map_url }}">
+<!--Based on {{ samples }} trips.<br>-->
+<img src={{ url_for('make_figure', quantiles=quantiles, labels=labels) }} width="400" alt="Image Placeholder"><br>
+<img src="{{ map_url }}"><br>
+<img src="{{ heatmap }}" width=550>
 
 {% endblock %}
+
