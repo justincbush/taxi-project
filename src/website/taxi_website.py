@@ -65,16 +65,18 @@ def record_data():
     
     output = {}
     for time_diff in range(-6,7):
-        output[time_diff] = \
-            dbase.query_database_row(trip_speeds_database,
-                                     start_lat_rnd=roundCoord(start_coords[0]),
-                                     start_lon_rnd=roundCoord(start_coords[1]),
-                                     end_lat_rnd=roundCoord(end_coords[0]),
-                                     end_lon_rnd=roundCoord(end_coords[1]),
-                                     day=day, hour=hour+time_diff)        
-
+        try:
+            output[time_diff] = \
+                dbase.query_database_row(trip_speeds_database,
+                                             start_lat_rnd=roundCoord(start_coords[0]),
+                                             start_lon_rnd=roundCoord(start_coords[1]),
+                                             end_lat_rnd=roundCoord(end_coords[0]),
+                                             end_lon_rnd=roundCoord(end_coords[1]),
+                                             day=day, hour=hour+time_diff)        
+        except TypeError:
+            output[time_diff] = [0,0,0,0,0,0,0,0,0,0,0,0,0]
     
-    samples = int(output[0][6])
+#    samples = int(output[0][6])
     quantiles = {}
     labels = {}
     for key in output:
@@ -94,7 +96,7 @@ def record_data():
     
     return render_template('output.html', map_url=map_url, quantiles=quantiles_to_url,
                                 labels = labels_to_url, start_address=start_point,
-                                text_time=str(hour)+':00', samples=str(samples), 
+                                text_time=str(hour)+':00',
                                 day_name=days_of_week[day], end_address=end_point,
                                 heatmap=heatmap)
 
