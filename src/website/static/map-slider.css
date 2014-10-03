@@ -1,0 +1,70 @@
+.ui-slider {
+    height: 1px;
+    width: 500px;
+    padding-left: 15px; //add this
+
+}
+
+
+.ui-slider .ui-slider-handle {
+    outline: none;
+    height: 10px;
+    width: 5px;
+    padding-left: 5px; //add this
+
+}
+
+#map-slider-controls {
+	padding: 0 px;
+}
+
+
+
+#map-slider-labels {
+	position: relative;
+	width: 500px;
+	height: 20px;
+	margin-top: 10px;
+	font-size: 13px;
+}
+
+#map-slider-labels span {
+	position: absolute;
+	top: 0;
+	width: 34px;
+	margin-left: -16px;
+	text-align: center;
+}
+
+/* 
+ label-x at (24x+12)/168
+ */
+
+#map-slider-labels .label-0 {
+	left: 7.14%;
+}
+
+#map-slider-labels .label-1 {
+	left: 21.43%;
+}
+
+#map-slider-labels .label-2 {
+	left: 35.71%;
+}
+
+#map-slider-labels .label-3 {
+	left: 50%;
+}
+
+#map-slider-labels .label-4 {
+	left: 64.29%;
+}
+
+#map-slider-labels .label-5 {
+	left: 78.57%;
+}
+
+#map-slider-labels .label-6 {
+	left: 93.86%;
+}
+

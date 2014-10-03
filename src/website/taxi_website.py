@@ -40,7 +40,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def test_site():
-    return render_template('test_site.html')
+    return render_template('test_site-bootstrap.html')
     
 @app.route('/output', methods = ['POST'])
 def record_data():
@@ -65,23 +65,26 @@ def record_data():
     
     output = {}
     for time_diff in range(-6,7):
-        try:
-            output[time_diff] = \
+        new_hour = hour+time_diff
+        output[time_diff] = \
                 dbase.query_database_row(trip_speeds_database,
                                              start_lat_rnd=roundCoord(start_coords[0]),
                                              start_lon_rnd=roundCoord(start_coords[1]),
                                              end_lat_rnd=roundCoord(end_coords[0]),
                                              end_lon_rnd=roundCoord(end_coords[1]),
-                                             day=day, hour=hour+time_diff)        
-        except TypeError:
-            output[time_diff] = [0,0,0,0,0,0,0,0,0,0,0,0,0]
-    
+                                             day=(new_hour/24)%7, hour=new_hour%24)        
+
+        
 #    samples = int(output[0][6])
     quantiles = {}
     labels = {}
     for key in output:
-        quantiles[key] = sorted([distance/spd for spd in output[key][7:12]])
-        labels[key] = str(hour+key)+':00'
+        if output[key] is not None:
+            quantiles[key] = sorted([distance/spd for spd in output[key][7:12]])
+        else:
+            quantiles[key] = [0,0,0,0,0]
+            
+        labels[key] = str((hour+key)%24)+':00'
     
     print 'Quantiles:',quantiles
     quantiles_to_url = \
@@ -90,18 +93,23 @@ def record_data():
     labels_to_url = \
         ','.join(labels[key].replace(' ','+') for key in sorted(labels))
     
-    heatmap = 'static/hail_difficulty-'+days_of_week[day]+'.png'    
+    heatmap = 'static/hex-'+str(day)+'-'+str(hour)+'-large.png'   
     map_url = api.make_static_map_url(start_point,end_point,size='500x400',
                         maptype='terrain', markers=start_point+'|'+end_point)
     
+    days = range(168)
     return render_template('output.html', map_url=map_url, quantiles=quantiles_to_url,
                                 labels = labels_to_url, start_address=start_point,
-                                text_time=str(hour)+':00',
+                                text_time=str(hour)+':00', hour=hour, day=day,
                                 day_name=days_of_week[day], end_address=end_point,
-                                heatmap=heatmap)
+                                days=days, days_of_week=days_of_week)
+                                
+@app.route('/description')
+def description():
+    return render_template('description.html')
 
-@app.route('/fig/<quantiles>/<labels>')
-def make_figure(quantiles,labels):
+@app.route('/fig/<quantiles>/<labels>/<start>/<end>/<day>')
+def make_figure(quantiles,labels,start,end,day):
 
     split_data = np.array([float(num) for num in quantiles.split('z')])
 
@@ -109,7 +117,7 @@ def make_figure(quantiles,labels):
     
     quantile_labels = [label.replace('+',' ') for label in labels.split(',')]
     
-    fig = figures.multi_boxplot(quantiles_list,quantile_labels)
+    fig = figures.multi_boxplot(quantiles_list,quantile_labels,start,end,day)
     
     img = StringIO.StringIO()
     fig.savefig(img)        #  bbox_inches='tight' ?

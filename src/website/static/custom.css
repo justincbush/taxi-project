@@ -1,0 +1,10 @@
+/*! custom.css
+
+additional css to be included after bootstrap for taxi project webpage
+*/
+
+body { padding-top: 30px; }
+
+.navbar-default {
+    background-color: #ebf5ff;
+}
