@@ -40,7 +40,6 @@ def multi_boxplot(quantiles_list,quantile_labels,start,end,day):
           plt.plot(medianX, medianY, 'k',color='white')
           medians[i] = medianY[0]
 
-    
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
@@ -63,5 +62,5 @@ def multi_boxplot(quantiles_list,quantile_labels,start,end,day):
     ax.xaxis.set_tick_params(labelsize=12)
     fig.suptitle('Times from '+start+' to '+end+'.',size=16)
     
-
+#     fig.text(.99, .5,'testtesttesttesttest',transform=fig.gca().transAxes, size=8)
     return fig

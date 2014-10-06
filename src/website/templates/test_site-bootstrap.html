@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
+    <link rel="icon" href="static/favicon.ico?v=1">
 
     <title>NYC Taxi trip time estimator</title>
 
@@ -39,17 +39,19 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-6 nopadding">
           <form action="/output" method="post">
                 <br><br>
                 Where do you want to start? <br> 
-                <input type="text" name="start_point" size="50" maxlength="50"/> <br>
+                <input type="text" name="start_point" size="50" maxlength="50"
+                        value="New York Penn Station"/> <br>
                 Where do you want to go? <br>
-                <input type="text" name="end_point" size="50" maxlength="50"> <br>
+                <input type="text" name="end_point" size="50" maxlength="50"
+                        value="Metropolitan Museum of Art"> <br>
                 When are you leaving?<br>
                 <select name="day"> <br>
                     <option value=0>Monday</option>
-                    <option value=1>Tuesday</option>
+                    <option value=1 selected="selected">Tuesday</option>
                     <option value=2>Wednesday</option>
                     <option value=3>Thursday</option>
                     <option value=4>Friday</option>
@@ -67,7 +69,7 @@
                     <option value=7>7:00</option>
                     <option value=8>8:00</option>
                     <option value=9>9:00</option>
-                    <option value=10>10:00</option>
+                    <option value=10 selected="selected">10:00</option>
                     <option value=11>11:00</option>
                 </select>
                 <input type="radio" name="ampm" value="am" checked="checked">AM</input>
@@ -76,12 +78,13 @@
             </form>
             {% block boxplot %}{% endblock %}
         </div>
-        <div class="col-md-5">
-            {% block map %}{% endblock %} 
-       </div>
-       <div class="col-md-1">
+        <div class="col-md-1">
             {% block colorbar %}{% endblock %} 
        </div>
+        <div class="col-md-4">
+            {% block map %}{% endblock %} 
+       </div>
+
       </div>
 
       <hr>
