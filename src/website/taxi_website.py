@@ -102,7 +102,8 @@ def record_data():
                                 labels = labels_to_url, start_address=start_point,
                                 text_time=str(hour)+':00', hour=hour, day=day,
                                 day_name=days_of_week[day], end_address=end_point,
-                                days=days, days_of_week=days_of_week)
+                                days=days, days_of_week=days_of_week,
+                                start_lat=start_coords[0], start_lon=start_coords[1])
                                 
 @app.route('/description')
 def description():
@@ -120,7 +121,7 @@ def make_figure(quantiles,labels,start,end,day):
     fig = figures.multi_boxplot(quantiles_list,quantile_labels,start,end,day)
     
     img = StringIO.StringIO()
-    fig.savefig(img)        #  bbox_inches='tight' ?
+    fig.savefig(img)            #  bbox_inches='tight'
     img.seek(0)
     return send_file(img, mimetype='image/png')
     

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
+    <link rel="icon" href="static/favicon.ico?v=1">
 
     <title>NYC Taxi trip time estimator</title>
 
@@ -39,18 +39,62 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-md-5">
-            <br><br><br><br>
+        <div class="col-md-6">
+            <br><br>
+            <h4>The Basic Problem</h4>
             There are two obvious factors that determine how quickly a taxi can take you
             between two points in New York City. First, you have to find an available cab.
             Then you have to make your way through traffic.
             <br><br>
             From <a href="http://chriswhong.com/open-data/foil_nyc_taxi/">publicly 
-            available data</a>, we can give an account not just of the average
-            time by taxi between two points in the city, but the distribution of times.
-            In cases where you need to play it safe---like needing to catch a particular
-            train---the worst case may be more relevant than the average case.
+            available data</a>, we have detailed information about every taxi trip 
+            taken in New York City during 2013. In particular we have the latitude and longitude 
+            coordinates as well as the precise time for the beginning and end of each of the
+            more than 170 million trips. Well, "precise" but
+            of course their are outliers, and obviously incorrect data mixed in. Once
+            we've accounted for that, however, we can use this data to get information 
+            about how long cab trips between different parts of the city actually take, 
+            and how it depends on the time of day. 
             <br><br>
+            Pushing the data a little harder, we 
+            can make inferences about the number of available cabs in a given part of the
+            city at different times during the day. I say "pushing" because there is no data
+            about when a cab in on or off duty, or where the cabs are driving when they 
+            don't have passengers. But if we can handle those problems sensibly, then we
+            can imagine the number of available cabs should correspond to how easy it is 
+            to hail a taxi, and we can represent that information on a map as I've done 
+            in the images on the right.
+            <br><br>
+            
+            <h4>Estimating Trip Times</h4>
+            
+            Let's first take the more straightforward problem of estimating trip times 
+            between different locations in the city at a particular time and day of the
+            week. The basic approach is to divide the city up into a grid based on latitude 
+            and longitude coordinates. There is a careful balance to strike here, between
+            making the grid small enough to get as detailed information as possible, while
+            large enough to ensure there are a meaningful number of trips between grid
+            elements. Using the whole city as one big grid element is boring and 
+            uninformative, while using a grid that's just a few feet across means you 
+            won't have any similar trips to use in comparison.
+            <br><br>
+            
+            For the taxi data, the grid that gave the best tradeoff was 1/50 of a degree 
+            on each side. This is still fairly large---larger than a small Manhattan
+            neighborhood, for instance. So directly reporting the distribution of trip
+            times between two grid elements still might not be very informative. But we
+            can actually do better than that. While we might expect a trip starting several
+            blocks away and going to the same destination to take a different amount of
+            time, we might be more willing to expect it to go at roughly the same speed.
+            From this observation, we can see that what we really want to keep track
+            of are the distributions of speeds (and not times) between different parts of 
+            the city. Given that we know the distance of our trip, once we know the 
+            distribution of speeds we can infer the distribution of times. 
+            
+            <br><br>
+            
+            <h4>Estimating Cab Availability</h4>
+            
             Estimating how difficult it is to hail a cab is a little trickier. We don't 
             have any data for how long people had to wait to get a ride (or how many
             people gave up looking). But based on the number of cabs in an area, how much
@@ -59,19 +103,20 @@
             
             
         </div>
-        <div class="col-md-3">
-            <br>
-            <img src="/static/hex-4-9.png" width=280>
-            <img src="/static/hex-4-17.png" width=280>
+        
+        <div class="col-md-6">
+            <br><br><br>
+            <img src="/static/img/hex-4-7-overlay.png" width=260>
+            <img src="/static/img/hex-4-11-overlay.png" width=260>
+            <br><br>
+            <img src="/static/img/hex-4-17-overlay.png" width=260>
+            <img src="/static/img/hex-4-21-overlay.png" width=260>
         </div>
-        <div class="col-md-3">
-            <br>
-            <img src="/static/hex-4-12.png" width=280>
-            <img src="/static/hex-4-21.png" width=280>
-        </div>
+<!-- 
         <div class="col-md-1">
             <br><br><br><br>
         </div>
+ -->
       </div>
     </div>
     
