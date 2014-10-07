@@ -49,7 +49,8 @@ checked = ['checked','']
 @app.route('/')
 def test_site():
     return render_template('test_site-bootstrap.html', default_start=default_start,
-                            default_dest=default_dest)
+                            default_dest=default_dest, day_sel=day_sel, hour_sel=hour_sel,
+                            checked=checked)
     
 @app.route('/output', methods = ['POST'])
 def record_data():
