@@ -6,6 +6,10 @@
 import simplejson as json
 import urllib as url
 
+class NoPlaceError(Exception):
+    def __init__(self):
+        pass
+        
 # Take in a string description of a location, along with some optional geographic arguments
 # and an API key, and returns the lat/lon coordinates of the first result from google 
 # matching that location
@@ -17,6 +21,7 @@ def get_lat_lon_coords(location, key='AIzaSyDg3Rx-2nU5CtR3DnhUUwAcmgrN6ITUopg', 
     geo_args.update({'key': key})
     
     url_query = url_prefix + '?' + url.urlencode(geo_args)
+    print url_query
     
     result = json.load(url.urlopen(url_query))
     
@@ -26,7 +31,7 @@ def get_lat_lon_coords(location, key='AIzaSyDg3Rx-2nU5CtR3DnhUUwAcmgrN6ITUopg', 
         most_likely_lon = most_likely_place['geometry']['location']['lng']
         return [most_likely_lat, most_likely_lon]
     else:
-        raise exception_to_be_defined   
+        raise NoPlaceError
         
 # Take in an origin and destination (as either a string, or lat/lon coordinates), along
 # with an API key, and return the driving distance in miles between the two points

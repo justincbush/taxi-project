@@ -44,36 +44,36 @@
                 <br><br>
                 Where do you want to start? <br> 
                 <input type="text" name="start_point" size="50" maxlength="50"
-                        value="New York Penn Station"/> <br>
+                        value="{{ default_start }}"/> <br>
                 Where do you want to go? <br>
                 <input type="text" name="end_point" size="50" maxlength="50"
-                        value="Metropolitan Museum of Art"> <br>
+                        value="{{ default_dest }}"> <br>
                 When are you leaving?<br>
                 <select name="day"> <br>
-                    <option value=0>Monday</option>
-                    <option value=1 selected="selected">Tuesday</option>
-                    <option value=2>Wednesday</option>
-                    <option value=3>Thursday</option>
-                    <option value=4>Friday</option>
-                    <option value=5>Saturday</option>
-                    <option value=6>Sunday</option>
+                    <option value=0 {{ day_sel[0] }}>Monday</option>
+                    <option value=1 {{ day_sel[1] }}>Tuesday</option>
+                    <option value=2 {{ day_sel[2] }}>Wednesday</option>
+                    <option value=3 {{ day_sel[3] }}>Thursday</option>
+                    <option value=4 {{ day_sel[4] }}>Friday</option>
+                    <option value=5 {{ day_sel[5] }}>Saturday</option>
+                    <option value=6 {{ day_sel[6] }}>Sunday</option>
                 </select><br>
                <select name="hour"> <br>
-                    <option value=0>12:00</option>
-                    <option value=1>1:00</option>
-                    <option value=2>2:00</option>
-                    <option value=3>3:00</option>
-                    <option value=4>4:00</option>
-                    <option value=5>5:00</option>
-                    <option value=6>6:00</option>
-                    <option value=7>7:00</option>
-                    <option value=8>8:00</option>
-                    <option value=9>9:00</option>
-                    <option value=10 selected="selected">10:00</option>
-                    <option value=11>11:00</option>
+                    <option value=0 {{ hour_sel[0] }}>12:00</option>
+                    <option value=1 {{ hour_sel[1] }}>1:00</option>
+                    <option value=2 {{ hour_sel[2] }}>2:00</option>
+                    <option value=3 {{ hour_sel[3] }}>3:00</option>
+                    <option value=4 {{ hour_sel[4] }}>4:00</option>
+                    <option value=5 {{ hour_sel[5] }}>5:00</option>
+                    <option value=6 {{ hour_sel[6] }}>6:00</option>
+                    <option value=7 {{ hour_sel[7] }}>7:00</option>
+                    <option value=8 {{ hour_sel[8] }}>8:00</option>
+                    <option value=9 {{ hour_sel[9] }}>9:00</option>
+                    <option value=10 {{ hour_sel[10] }}>10:00</option>
+                    <option value=11 {{ hour_sel[11] }}>11:00</option>
                 </select>
-                <input type="radio" name="ampm" value="am" checked="checked">AM</input>
-                <input type="radio" name="ampm" value="pm">PM</input><br><br>   
+                <input type="radio" name="ampm" value="am" {{ checked[0] }}>AM</input>
+                <input type="radio" name="ampm" value="pm" {{ checked[1] }}>PM</input><br><br>   
                 <input type="submit" value="Submit">
             </form>
             {% block boxplot %}{% endblock %}

@@ -38,25 +38,48 @@ tol = .01 # Rounding tolerance that generated these databases
 
 app = Flask(__name__)
 
+default_start = 'New York Penn Station'
+default_dest = 'Metropolitan Museum of Art'
+hour_sel = ['' for i in range(12)]
+hour_sel[10] = 'selected'
+day_sel = ['' for i in range(7)]
+day_sel[1] = 'selected'
+checked = ['checked','']
+
 @app.route('/')
 def test_site():
-    return render_template('test_site-bootstrap.html')
+    return render_template('test_site-bootstrap.html', default_start=default_start,
+                            default_dest=default_dest)
     
 @app.route('/output', methods = ['POST'])
 def record_data():
     start_point = request.form.get('start_point')
+    default_start = start_point
     end_point = request.form.get('end_point')
+    default_dest = end_point
     day = int(request.form.get('day'))
+    day_sel = ['' for i in range(7)]
+    day_sel[day] = 'selected'
     hour = int(request.form.get('hour'))
+    hour_sel = ['' for i in range(12)]
+    hour_sel[hour] = 'selected'
     ampm = request.form.get('ampm')
+    checked = ['checked','']
     if ampm == 'pm':
+        checked = ['','checked']
         hour += 12
     days_of_week = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday',
                 5: 'Saturday', 6: 'Sunday'}
     day_name = days_of_week[day]
-        
-    start_coords = api.get_lat_lon_coords(start_point)
-    end_coords = api.get_lat_lon_coords(end_point)
+
+
+    
+    bounds="40.5,-74.2|40.9,-73.7"   
+    try:    
+        start_coords = api.get_lat_lon_coords(start_point,bounds=bounds)
+        end_coords = api.get_lat_lon_coords(end_point,bounds=bounds)
+    except api.NoPlaceError:
+        return render_template('error.html')
     distance = api.get_trip_distance(','.join(str(i) for i in start_coords),
                                      ','.join(str(j) for j in end_coords))
                                      
@@ -103,11 +126,17 @@ def record_data():
                                 text_time=str(hour)+':00', hour=hour, day=day,
                                 day_name=days_of_week[day], end_address=end_point,
                                 days=days, days_of_week=days_of_week,
-                                start_lat=start_coords[0], start_lon=start_coords[1])
+                                start_lat=start_coords[0], start_lon=start_coords[1],
+                                default_start=default_start, default_dest=default_dest,
+                                hour_sel=hour_sel, day_sel=day_sel, checked=checked)
                                 
 @app.route('/description')
 def description():
     return render_template('description.html')
+    
+@app.route('/error')
+def error():
+    return render_template('error.html')
 
 @app.route('/fig/<quantiles>/<labels>/<start>/<end>/<day>')
 def make_figure(quantiles,labels,start,end,day):
