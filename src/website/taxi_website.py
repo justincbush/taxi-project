@@ -80,7 +80,9 @@ def record_data():
         start_coords = api.get_lat_lon_coords(start_point,bounds=bounds)
         end_coords = api.get_lat_lon_coords(end_point,bounds=bounds)
     except api.NoPlaceError:
-        return render_template('error.html')
+        return render_template('error.html',default_start=default_start,
+                            default_dest=default_dest, day_sel=day_sel, hour_sel=hour_sel,
+                            checked=checked)
     distance = api.get_trip_distance(','.join(str(i) for i in start_coords),
                                      ','.join(str(j) for j in end_coords))
                                      
